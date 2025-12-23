@@ -3,19 +3,22 @@ import { useState } from "react"
 
 export default function Home() {
   const [prompt, setPrompt] = useState("")
-  const [image, setImage] = useState("")
+  const [image, setImage] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
-  async function generateImage() {
+  const generateImage = async () => {
     setLoading(true)
+    setImage(null)
+
     const res = await fetch("/api/generate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ prompt }),
     })
 
-    const data = await res.json()
-    setImage(data.image)
+    const blob = await res.blob()
+    const url = URL.createObjectURL(blob)
+    setImage(url)
     setLoading(false)
   }
 
@@ -27,14 +30,22 @@ export default function Home() {
         value={prompt}
         onChange={(e) => setPrompt(e.target.value)}
         placeholder="Describe your product"
-        style={{ width: "100%", padding: 12 }}
+        style={{ width: "100%", padding: 10 }}
       />
 
-      <button onClick={generateImage} style={{ marginTop: 12 }}>
-        {loading ? "Loading..." : "Generate Image"}
+      <button onClick={generateImage} style={{ marginTop: 10 }}>
+        Generate Image
       </button>
 
-      {image && <img src={image} style={{ marginTop: 20, width: "100%" }} />}
+      {loading && <p>Loading...</p>}
+
+      {image && (
+        <img
+          src={image}
+          alt="Generated"
+          style={{ marginTop: 20, maxWidth: "100%" }}
+        />
+      )}
     </main>
   )
 }
