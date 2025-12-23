@@ -1,41 +1,57 @@
+"use client";
+
+import { useState } from "react";
+
 export default function Home() {
+  const [prompt, setPrompt] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [image, setImage] = useState("");
+
+  const generateImage = async () => {
+    if (!prompt) return alert("اكتبي وصف للصورة");
+
+    setLoading(true);
+    setImage("");
+
+    try {
+      const res = await fetch("/api/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt }),
+      });
+
+      const data = await res.json();
+      setImage(data.image);
+    } catch (err) {
+      alert("حصل خطأ");
+    }
+
+    setLoading(false);
+  };
+
   return (
-    <main style={{ padding: "40px", fontFamily: "Arial" }}>
+    <main style={{ padding: 40, fontFamily: "Arial" }}>
       <h1>AI Product Image Generator</h1>
-      <p>
-        Generate professional product images for e-commerce and ads using AI.
-      </p>
 
-      <div style={{ marginTop: "30px" }}>
-        <input
-          type="text"
-          placeholder="Describe your product (e.g. luxury watch on white background)"
-          style={{
-            width: "100%",
-            padding: "12px",
-            marginBottom: "12px"
-          }}
-        />
+      <input
+        value={prompt}
+        onChange={(e) => setPrompt(e.target.value)}
+        placeholder="Describe your product..."
+        style={{ width: "100%", padding: 12 }}
+      />
 
-        <select style={{ width: "100%", padding: "12px", marginBottom: "12px" }}>
-          <option>White Background</option>
-          <option>Luxury</option>
-          <option>Studio</option>
-          <option>Lifestyle</option>
-        </select>
+      <button
+        onClick={generateImage}
+        style={{ marginTop: 12, padding: 12 }}
+      >
+        {loading ? "Generating..." : "Generate Image"}
+      </button>
 
-        <button
-          style={{
-            padding: "12px 20px",
-            background: "black",
-            color: "white",
-            border: "none",
-            cursor: "pointer"
-          }}
-        >
-          Generate Image
-        </button>
-      </div>
+      {image && (
+        <div style={{ marginTop: 20 }}>
+          <img src={image} style={{ maxWidth: "100%" }} />
+        </div>
+      )}
     </main>
   );
-                        }
+}
