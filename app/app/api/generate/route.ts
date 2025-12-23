@@ -5,17 +5,10 @@ export async function POST(req: Request) {
     const { prompt } = await req.json()
 
     if (!prompt) {
-      return NextResponse.json({ error: "Prompt is required" }, { status: 400 })
+      return NextResponse.json({ error: "Prompt required" }, { status: 400 })
     }
 
     const HF_TOKEN = process.env.HUGGINGFACE_API_KEY
-
-    if (!HF_TOKEN) {
-      return NextResponse.json(
-        { error: "Hugging Face API key missing" },
-        { status: 500 }
-      )
-    }
 
     const response = await fetch(
       "https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0",
@@ -27,29 +20,22 @@ export async function POST(req: Request) {
         },
         body: JSON.stringify({
           inputs: prompt,
+          options: { wait_for_model: true }
         }),
       }
     )
 
     if (!response.ok) {
-      const text = await response.text()
-      return NextResponse.json(
-        { error: text },
-        { status: response.status }
-      )
+      const err = await response.text()
+      return NextResponse.json({ error: err }, { status: 500 })
     }
 
-    const imageBuffer = await response.arrayBuffer()
+    const image = await response.arrayBuffer()
 
-    return new NextResponse(imageBuffer, {
-      headers: {
-        "Content-Type": "image/png",
-      },
+    return new NextResponse(image, {
+      headers: { "Content-Type": "image/png" },
     })
-  } catch (error: any) {
-    return NextResponse.json(
-      { error: error.message || "Something went wrong" },
-      { status: 500 }
-    )
+  } catch (e: any) {
+    return NextResponse.json({ error: e.message }, { status: 500 })
   }
 }
